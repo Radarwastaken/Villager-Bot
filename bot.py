@@ -7,7 +7,10 @@ import asyncpg
 import discord
 import logging
 import random
+# import uvloop
 import arrow
+
+# uvloop.install()
 
 # set up basic logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(name)s: %(message)s')
@@ -53,7 +56,8 @@ bot = commands.AutoShardedBot(  # setup bot
     command_prefix=get_prefix,
     case_insensitive=True,
     intents=intents,
-    help_command=None
+    help_command=None,
+    shard_count=21,
 )
 
 bot.logger = logger
@@ -91,7 +95,7 @@ async def setup_database():  # init pool connection to database
         user=keys.database.user,  # database username
         password=keys.database.passw,  # password which goes with user
         max_size=50,
-        command_timeout=5
+        command_timeout=5,
     )
 
 
@@ -197,7 +201,7 @@ async def global_check(ctx):
             return False
 
         if random.randint(1, 40) == 1:  # spawn mob
-            if ctx.command._buckets._cooldown != None:  # if command has a cooldown on it
+            if ctx.command._buckets._cooldown != None and ctx.command._buckets._cooldown >= 2:
                 bot.d.spawn_queue[ctx] = arrow.utcnow()
                 return True
 

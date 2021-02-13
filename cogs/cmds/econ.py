@@ -213,7 +213,7 @@ class Econ(commands.Cog):
                     def author_check(react, r_user):
                         return r_user == ctx.author and ctx.channel == react.message.channel and msg.id == react.message.id
 
-                    react, r_user = await self.bot.wait_for('reaction_add', check=author_check, timeout=180)  # wait for reaction from message author (3min)
+                    react, r_user = await self.bot.wait_for('reaction_add', check=author_check, timeout=5*60)  # wait for reaction from message author
                 except asyncio.TimeoutError:
                     return
 
@@ -601,7 +601,7 @@ class Econ(commands.Cog):
 
         db_user = await self.db.fetch_user(ctx.author.id)
 
-        if 'pickaxe' in item.lower() or 'sword' in item.lower() or 'trophy' in item.lower() or 'amulet' in item.lower():
+        if 'pickaxe' in item.lower() or 'sword' in item.lower():
             await self.bot.send(ctx, ctx.l.econ.give.and_i_oop)
             return
 
@@ -892,7 +892,7 @@ class Econ(commands.Cog):
             await self.bot.send(victim, random.choice(ctx.l.econ.pillage.u_lose.victim).format(ctx.author.mention))
 
     @commands.command(name='use', aliases=['eat', 'chug'])
-    @commands.cooldown(1, 0.25, commands.BucketType.user)
+    @commands.cooldown(1, .5, commands.BucketType.user)
     async def use_item(self, ctx, *, thing):
         """Allows you to use potions and some other items"""
 
@@ -980,6 +980,20 @@ class Econ(commands.Cog):
                         await self.db.add_item(ctx.author.id, item[0], item[1], 1, item[3])
                         await self.bot.send(ctx, random.choice(ctx.l.econ.use.present).format(item[0], item[1], self.d.emojis.emerald))
                         return
+
+        if thing == 'barrel':
+            await self.db.remove_item(ctx.author.id, 'Barrel', 1)
+            for _ in range(10):
+                for item in self.d.findables:
+                    if random.randint(0, (item[2]//1.5)+5) == 1:
+                        await self.db.add_item(ctx.author.id, item[0], item[1], 1, item[3])
+                        await self.bot.send(ctx, random.choice(ctx.l.econ.use.barrel_item).format(item[0], item[1], self.d.emojis.emerald))
+                        return
+
+            ems = random.randint(2, 4096)
+            await self.bot.send(ctx, random.choice(ctx.l.econ.use.barrel_ems).format(ems, self.d.emojis.emerald))
+            await self.db.balance_add(ctx.author.id, ems)
+            return
 
         await self.bot.send(ctx, ctx.l.econ.use.stupid_3)
 
